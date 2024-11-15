@@ -11,6 +11,7 @@ from shiny import render, reactive
 from shinywidgets import render_plotly
 import palmerpenguins
 import seaborn
+import pandas
 
 #Penguins data set
 penguins_df = palmerpenguins.load_penguins()
@@ -20,17 +21,26 @@ ui.page_opts(title="Caleb Sellinger - Module 2: Palmer Penguins Data", fillable=
 
 #Reactive Calculations
 @reactive.calc
+#filter species
 def filtered_data():
     selected_species = input.selected_species_list()
-    island = [input.selected_island()]
-    bins = input.seaborn_bin_count()
     
     if selected_species:
         filtered = penguins_df[penguins_df["species"].isin(selected_species)]
-
-    elif island:
-        filtered = penguins_df[penguins_df["island"].isin(island)]
         
+    return filtered
+
+@reactive.calc
+#fitler columns
+def filtered_data_2():
+    selected_columns = input.selected_columns()
+
+    if selected_columns:
+        filtered = pandas.DataFrame(penguins_df).filter(items=list(selected_columns),axis=1)
+
+    else:
+        return penguins_df
+
     return filtered
     
 #column component
@@ -41,7 +51,7 @@ with ui.layout_columns():
         #Data Table
         @render.data_frame
         def penguins_datatable():
-            return render.DataTable(filtered_data())
+            return render.DataTable(filtered_data_2())
 
     #Card component for Data Grid
     with ui.card(full_screen=True):
@@ -78,6 +88,6 @@ with ui.sidebar(open="open",bg="#99ccff",fillable=True):
     ui.input_checkbox_group("selected_species_list","Select Species (Plot 1 & 2)",choices=["Adelie","Gentoo","Chinstrap"],selected=["Adelie","Gentoo","Chinstrap"],inline=False)
     ui.input_slider("seaborn_bin_count","Seaborn Slider (Plot 3)",0,150,50)
     ui.input_numeric(id="selected_number_of_bins",label="Select Number of Bins (Plot4)",value=10)
-    ui.input_selectize(id="selected_island",label="Select Penguins Island (Plot 5)",choices=["Torgersen","Biscoe","Dream"],selected="Dream")
+    ui.input_selectize(id="selected_columns",label="Select Column to Display",choices=["island","bill_length_mm","bill_depth_mm","flipper_length_mm","body_mass_g","sex","year"],selected=["species","island","bill_length_mm","bill_depth_mm","flipper_length_mm","body_mass_g","sex","year"],multiple=True)
     ui.hr()
     ui.a("Link HERE",href="https://github.com/crsellinger/cintel-02-data",target="_blank")
